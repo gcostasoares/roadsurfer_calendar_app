@@ -773,6 +773,11 @@ function removeOutsideListeners(){ document.removeEventListener('mousedown', onD
     height: 10px;
   }
 
+  .year-popover,
+  .month-popover{
+    transform: translateX(-100px) scale(0.7);
+  }
+
   .head-row { padding: 8px 2px 6px }
   .week-header { gap: 4px }
   .head-day { font-size: 11px; padding: 0 }
