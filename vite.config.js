@@ -6,11 +6,11 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 
 export default defineConfig({
+  base: '/roadsurfer_calendar_app/',
   plugins: [
     vue(),
     vueDevTools(),
   ],
-  base: '/roadsurfer_calendar_app/',
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
