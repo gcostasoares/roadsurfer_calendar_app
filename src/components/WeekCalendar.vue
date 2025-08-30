@@ -390,8 +390,12 @@ function weekEvents(){
   for(const b of mergedBookings()){
     const s = b.startDate ? parseISOFlexible(b.startDate) : null
     const e = b.endDate ? parseISOFlexible(b.endDate) : null
-    if(s && weekDayKeys.value.has(dayKey(s)) && matchesPickup(b)) arr.push({ when:'start', id:String(b.id), name:String(b.customerName||'Customer'), at:s })
-    if(e && weekDayKeys.value.has(dayKey(e)) && matchesReturn(b)) arr.push({ when:'end',   id:String(b.id), name:String(b.customerName||'Customer'), at:e })
+    if(s && weekDayKeys.value.has(dayKey(s)) && matchesPickup(b)) arr.push({ 
+      when:'start', id:String(b.id), name:String(b.customerName||'Customer'), at:s 
+    })
+    if(e && weekDayKeys.value.has(dayKey(e)) && matchesReturn(b)) arr.push({ 
+      when:'end',   id:String(b.id), name:String(b.customerName||'Customer'), at:e 
+    })
   }
   return arr
 }
