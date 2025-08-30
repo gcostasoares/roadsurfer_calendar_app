@@ -245,9 +245,20 @@ function setDateAndEmit(d){
   currentDate.value = nd
   emit('update-view-date', nd)
 }
-function prevWeek(){ const d=new Date(weekStart.value); d.setDate(d.getDate()-7); setDateAndEmit(d) }
-function nextWeek(){ const d=new Date(weekStart.value); d.setDate(d.getDate()+7); setDateAndEmit(d) }
-function goToday(){ setDateAndEmit(new Date(today)) }
+function prevWeek(){ 
+  const d=new Date(weekStart.value); d.setDate(d.getDate()-7); setDateAndEmit(d) 
+}
+
+function nextWeek(){ 
+  const d=new Date(weekStart.value); d.setDate(d.getDate()+7); setDateAndEmit(d) 
+}
+
+
+function goToday(){ 
+  setDateAndEmit(new Date(today)) 
+}
+
+
 function onKeydown(e){
   if(e.key==='ArrowLeft') prevWeek()
   else if(e.key==='ArrowRight') nextWeek()
