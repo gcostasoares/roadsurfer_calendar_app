@@ -5,6 +5,8 @@
         <button class="month-btn" @click="toggleMonthPicker" ref="monthBtnEl">{{ monthName }}</button>
         <button class="year-btn" @click="toggleYearPicker" ref="yearBtnEl">{{ year }}</button>
 
+
+
         <div v-if="showMonthPicker" class="month-popover" @click.stop ref="monthPopEl">
           <div class="month-grid">
             <button
@@ -18,6 +20,9 @@
             </button>
           </div>
         </div>
+
+
+
 
         <div v-if="showYearPicker" class="year-popover" @click.stop ref="yearPopEl">
           <div class="year-toolbar">
@@ -51,6 +56,8 @@
         <button class="chip" @click="nextWeek">›</button>
       </div>
     </header>
+
+
 
     <div class="head-row">
       <div class="phantom"></div>
@@ -107,6 +114,7 @@
     <div class="divider"></div>
   </div>
 </template>
+
 
 <script setup>
 import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
