@@ -194,7 +194,9 @@ const detailCache = ref(new Map())
 
 async function fetchStationDetail(id){
   try{
-    const r = await fetch(`${API}/stations/${id}`, { cache:'no-store' })
+    const r = await fetch(`${API}/stations/${id}`, {
+       cache:'no-store' 
+      })
     if(!r.ok) return null
     const obj = await r.json()
     return Array.isArray(obj.bookings) ? obj.bookings : null
@@ -985,9 +987,19 @@ const showNowLine = computed(()=>{
 }
 
 @media (max-width: 420px) {
-  .title { font-size: 24px }
-  .num { width: 28px; height: 28px }
-  .time-wrap { --hour-h: 48px }
+  .title { 
+    font-size: 24px; 
+  }
+  .num { 
+    width: 28px; 
+    height: 28px; 
+  }
+
+
+  .time-wrap { 
+    --hour-h: 48px; 
+  }
+  
   .head-day {
     flex-direction: column;
     font-size: 12px;
@@ -1044,24 +1056,55 @@ const showNowLine = computed(()=>{
     transform: translateX(-100px) scale(0.7);
   }
 
-  .head-row { padding: 8px 2px 6px }
-  .week-header { gap: 4px }
-  .head-day { font-size: 11px; padding: 0 }
-  .num { width: 24px; height: 24px }
+  .head-row { 
+    padding: 8px 2px 6px; 
+  }
+
+  .week-header { 
+    gap: 4px; 
+  }
+  .head-day { 
+    font-size: 11px; 
+    padding: 0;
+  }
+
+  .num { 
+    width: 24px; 
+    height: 24px; 
+  }
 
   .time-wrap { --hour-h: 44px }
-  .g-hour { font-size: 10px; padding-right: 6px }
 
-  .events { inset: 0 3px }
-  .event { padding: 4px 6px; font-size: 11px; border-radius: 8px }
+  .g-hour { font-size: 10px; 
+    padding-right: 6px; 
+  }
+
+  .events { 
+    inset: 0 3px; 
+  }
+
+
+  .event { 
+    padding: 4px 6px; 
+    font-size: 11px; 
+    border-radius: 8px; 
+  }
 
   .month-popover,
-  .year-popover { width: calc(100vw - 24px) }
+  .year-popover { 
+    width: calc(100vw - 24px); 
+  }
 
   .month-grid,
-  .year-grid { gap: 6px }
+  .year-grid { 
+    gap: 6px;
+  }
 
-  .month-cell { padding: 8px 0 }
-  .year-cell { padding: 8px 0 }
+  .month-cell { 
+    padding: 8px 0; 
+  }
+  .year-cell {
+     padding: 8px 0; 
+  }
 }
 </style>
