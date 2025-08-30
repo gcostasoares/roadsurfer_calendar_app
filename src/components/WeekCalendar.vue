@@ -73,7 +73,6 @@
       </div>
 
       <div class="grid">
-        <!-- only show the red line when the current week contains today -->
         <div v-if="showNowLine" class="now-line" :style="{ top: nowY + 'px' }"></div>
 
         <div class="rows">
@@ -127,11 +126,14 @@ function normalize(d){
   n.setHours(0,0,0,0)
   return n
 }
+
 function isSameDate(a,b){
   return a.getFullYear()===b.getFullYear()
     && a.getMonth()===b.getMonth()
     && a.getDate()===b.getDate()
 }
+
+
 function startOfISOWeek(date){
   const d = new Date(date)
   const day = d.getDay() || 7
@@ -139,15 +141,21 @@ function startOfISOWeek(date){
   d.setHours(0,0,0,0)
   return d
 }
+
+
+
 function dayKey(d){
   const y = d.getFullYear()
   const m = String(d.getMonth()+1).padStart(2,'0')
   const dd = String(d.getDate()).padStart(2,'0')
   return `${y}-${m}-${dd}`
 }
+
+
 function isDateOnly(v){
   return typeof v==='string' && /^\d{4}-\d{2}-\d{2}$/.test(v)
 }
+
 function parseISOFlexible(v){
   if(isDateOnly(v)){
     const [y,m,d]=v.split('-').map(Number)
@@ -156,6 +164,8 @@ function parseISOFlexible(v){
   const x=new Date(v)
   return isNaN(x)?null:x
 }
+
+
 function addDays(d,n){
   const x = new Date(d)
   x.setDate(x.getDate()+n)
@@ -169,6 +179,10 @@ watch(() => props.viewDate, v => { currentDate.value = new Date(v) })
 
 const rawBookings = ref([])
 const detailCache = ref(new Map())
+
+
+
+
 
 async function fetchStationDetail(id){
   try{
@@ -208,6 +222,8 @@ watch(
 
 const year = computed(()=>currentDate.value.getFullYear())
 const monthIndex = computed(()=>currentDate.value.getMonth())
+
+
 const monthName = computed(()=>new Intl.DateTimeFormat('en-US',{month:'long'}).format(currentDate.value))
 
 const weekStart = computed(()=>startOfISOWeek(currentDate.value))
@@ -232,24 +248,39 @@ function onKeydown(e){
 
 const showYearPicker = ref(false)
 const yearPageStart = ref(0)
+
 const yearGrid = computed(()=>Array.from({length:16},(_,i)=>yearPageStart.value+i))
 function toggleYearPicker(){
   if(!showYearPicker.value) yearPageStart.value = Math.floor(year.value/16)*16
   showYearPicker.value = !showYearPicker.value
   showMonthPicker.value = false
 }
+
+
+
 function pickYear(y){
   const d=new Date(currentDate.value)
   d.setFullYear(y)
   setDateAndEmit(d)
   showYearPicker.value=false
 }
-function prevYearPage(){ yearPageStart.value -= 16 }
-function nextYearPage(){ yearPageStart.value += 16 }
+
+function prevYearPage(){ 
+  yearPageStart.value -= 16 
+}
+function nextYearPage(){ 
+  yearPageStart.value += 16 
+}
 
 const showMonthPicker = ref(false)
-const months = Array.from({length:12},(_,i)=>({ i, label:new Intl.DateTimeFormat('en-US',{month:'short'}).format(new Date(2000,i,1)) }))
-function toggleMonthPicker(){ showMonthPicker.value = !showMonthPicker.value; showYearPicker.value = false }
+const months = Array.from({length:12},(_,i)=>({
+   i, label:new Intl.DateTimeFormat('en-US',{month:'short'}).format(new Date(2000,i,1)) 
+  }))
+function toggleMonthPicker(){ 
+  showMonthPicker.value = !showMonthPicker.value; showYearPicker.value = false 
+}
+
+
 function pickMonth(i){
   const d=new Date(currentDate.value)
   d.setMonth(i,1)
@@ -275,6 +306,8 @@ async function enrichVisibleWeekTimes(){
     const hasEnd   = b.endDate   && !isDateOnly(b.endDate)
     if(hasStart && hasEnd) continue
 
+
+
     const s = b.startDate ? parseISOFlexible(b.startDate) : null
     const e = b.endDate ? parseISOFlexible(b.endDate) : null
     if((s && weekDayKeys.value.has(dayKey(s))) || (e && weekDayKeys.value.has(dayKey(e)))) need.push(b)
@@ -287,8 +320,12 @@ async function enrichVisibleWeekTimes(){
   for(const b of need){
     const det = await fetchBookingDetail(sid, b.id)
     if(det){
-      if(det.startDate && !isDateOnly(det.startDate)){ b.startDate = det.startDate; changed = true }
-      if(det.endDate   && !isDateOnly(det.endDate)){   b.endDate   = det.endDate;   changed = true }
+      if(det.startDate && !isDateOnly(det.startDate)){ 
+        b.startDate = det.startDate; changed = true 
+      }
+      if(det.endDate   && !isDateOnly(det.endDate)){   
+        b.endDate   = det.endDate;   changed = true 
+      }
     }
     if(isDateOnly(b.startDate)){
       const [y,m,d] = b.startDate.split('-').map(Number)
@@ -308,10 +345,26 @@ async function enrichVisibleWeekTimes(){
 watch(weekStart, async ()=>{ await enrichVisibleWeekTimes() })
 
 function n(s){ return String(s||'').toLowerCase() }
-function stationNameLC(){ return n(props.station?.name) }
-function stationIdStr(){ return String(props.station?.id || '') }
-function matchesPickup(b){ return b.pickupStation ? n(b.pickupStation).includes(stationNameLC()) : String(b.pickupReturnStationId || '') === stationIdStr() }
-function matchesReturn(b){ return b.returnStation ? n(b.returnStation).includes(stationNameLC()) : String(b.pickupReturnStationId || '') === stationIdStr() }
+function stationNameLC(){ 
+  return n(props.station?.name) 
+}
+
+
+function stationIdStr(){ 
+  return String(props.station?.id || '') 
+}
+
+function matchesPickup(b){ 
+  return b.pickupStation ? n(b.pickupStation).includes(stationNameLC()) : String(b.pickupReturnStationId || '') === stationIdStr() 
+}
+
+function matchesReturn(b){ 
+  return b.returnStation ? n(b.returnStation).includes(stationNameLC()) : String(b.pickupReturnStationId || '') === stationIdStr() 
+}
+
+
+
+
 
 function weekEvents(){
   const arr=[]
@@ -323,6 +376,7 @@ function weekEvents(){
   }
   return arr
 }
+
 
 function toMinutes(d){ return d.getHours()*60 + d.getMinutes() }
 
@@ -352,12 +406,24 @@ const hours = computed(()=>{
   return arr
 })
 
-function labelHour(h){ return String(h).padStart(2,'0') + ':00' }
+function labelHour(h){ 
+  return String(h).padStart(2,'0') + ':00' 
+}
 
 const timeWrapEl = ref(null)
-function hourHeight(){ const one=timeWrapEl.value?.querySelector('.g-hour'); return one ? one.getBoundingClientRect().height : 56 }
-function gridHeight(){ return hourHeight() * hours.value.length }
-function minutesFromStart(d){ const m=d.getHours()*60 + d.getMinutes(); const base=hourStart.value*60; return m - base }
+
+function hourHeight(){ 
+  const one=timeWrapEl.value?.querySelector('.g-hour'); return one ? one.getBoundingClientRect().height : 56 
+}
+function gridHeight(){ 
+  return hourHeight() * hours.value.length 
+}
+
+
+
+function minutesFromStart(d){ 
+  const m=d.getHours()*60 + d.getMinutes(); const base=hourStart.value*60; return m - base 
+}
 
 function eventsForDay(d){
   const k = dayKey(d)
@@ -375,6 +441,7 @@ function styleForEvent(ev){
 }
 
 const nowY = ref(0)
+
 async function tickNow(){
   const d = new Date()
   await nextTick()
@@ -383,9 +450,18 @@ async function tickNow(){
   if(y > gridHeight() - 1) y = gridHeight() - 1
   nowY.value = y
 }
+
+
 let nowTimer = null
-onMounted(()=>{ tickNow(); nowTimer=setInterval(tickNow,60000); addOutsideListeners() })
-onBeforeUnmount(()=>{ if(nowTimer) clearInterval(nowTimer); removeOutsideListeners() })
+
+onMounted(()=>{ 
+  tickNow(); nowTimer=setInterval(tickNow,60000); addOutsideListeners() 
+})
+onBeforeUnmount(()=>{ 
+  if(nowTimer) clearInterval(nowTimer); removeOutsideListeners() 
+})
+
+
 watch([weekStart, hourStart, hourEnd], ()=>{ tickNow() })
 
 const dragging = ref(null)
@@ -401,6 +477,8 @@ function onDragStart(e,payload){
   document.addEventListener('dragover', onDocDragOver, { passive:false })
   document.addEventListener('drop', onDocDrop, { passive:false })
 }
+
+
 function onDragEnd(){
   isDragging.value=false
   dragging.value=null
@@ -408,29 +486,50 @@ function onDragEnd(){
   document.removeEventListener('dragover', onDocDragOver)
   document.removeEventListener('drop', onDocDrop)
 }
+
+
+
 function onDocDrop(e){
-  if(!isDragging.value) return
-  try{ e.preventDefault() }catch{}
+  if(!isDragging.value) 
+  return
+  try{ e.preventDefault() }
+  catch{}
   const rect=document.querySelector('.grid')?.getBoundingClientRect()
-  if(!rect){ onDragEnd(); return }
+  if(!rect){ 
+    onDragEnd(); 
+    return
+  }
+
   let x=e.clientX
   let idx=Math.floor(((x-rect.left)/rect.width)*7)
+
   if(idx<0) idx=0
   if(idx>6) idx=6
   const d=new Date(weekStart.value); d.setDate(d.getDate()+idx)
   applyDropTo(d)
   onDragEnd()
 }
+
+
 function onDocDragOver(e){
   if(!isDragging.value) return
   const rect=document.querySelector('.grid')?.getBoundingClientRect()
+
   if(!rect) return
   try{ e.preventDefault(); if(e.dataTransfer) e.dataTransfer.dropEffect='move' }catch{}
+
   const x=e.clientX
   const dir = x < rect.left+EDGE ? -1 : (x > rect.right-EDGE ? 1 : 0)
-  if(dir===0){ stopAuto(); return }
-  if(autoDir!==dir){ stopAuto(); autoDir=dir; stepAuto() }
+
+
+  if(dir===0){ stopAuto();
+     return }
+  if(autoDir!==dir){ 
+    stopAuto(); autoDir=dir; stepAuto() 
+  }
 }
+
+
 function stepAuto(){
   if(!isDragging.value || autoDir===0) return
   if(autoTimer) return
@@ -442,6 +541,9 @@ function stepAuto(){
     stepAuto()
   }, STEP_MS)
 }
+
+
+
 function stopAuto(){ if(autoTimer){ clearTimeout(autoTimer); autoTimer=null } autoDir=0 }
 
 function applyDropTo(date){
@@ -449,9 +551,13 @@ function applyDropTo(date){
   const bid=dragging.value.bookingId
   const i=rawBookings.value.findIndex(b=>String(b.id)===bid)
   if(i<0) return
+
+
   const b={...rawBookings.value[i]}
   const curStart=parseISOFlexible(b.startDate)
   const curEnd=parseISOFlexible(b.endDate)
+
+
   if(dragging.value.type==='start'){
     const ns=new Date(curStart||date)
     ns.setFullYear(date.getFullYear(), date.getMonth(), date.getDate())
@@ -482,21 +588,31 @@ function onDocPointer(e){
     if(!inside) showYearPicker.value=false
   }
 }
+
+
+
 function addOutsideListeners(){
   document.addEventListener('mousedown', onDocPointer, true)
   document.addEventListener('touchstart', onDocPointer, true)
 }
+
+
 function removeOutsideListeners(){
   document.removeEventListener('mousedown', onDocPointer, true)
   document.removeEventListener('touchstart', onDocPointer, true)
 }
 
-/* show the red line only if this week contains today */
 const showNowLine = computed(()=>{
   const ws = weekStart.value
   const we = addDays(ws, 6)
   return +today >= +ws && +today <= +we
 })
+
+
+
+
+
+
 </script>
 
 <style scoped>
