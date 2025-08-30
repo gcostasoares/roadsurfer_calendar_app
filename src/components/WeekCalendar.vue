@@ -1,5 +1,13 @@
 <template>
-  <div class="wrap" tabindex="0" @keydown="onKeydown" ref="wrapEl">
+  <div
+    class="wrap"
+    tabindex="0"
+    @keydown="onKeydown"
+    ref="wrapEl"
+    @touchstart="onSwipeStart"
+    @touchmove="onSwipeMove"
+    @touchend="onSwipeEnd"
+  >
     <header class="topbar">
       <div class="title">
         <button class="month-btn" @click="toggleMonthPicker" ref="monthBtnEl">{{ monthName }}</button>
@@ -73,7 +81,8 @@
       </div>
 
       <div class="grid">
-        <div class="now-line" :style="{ top: nowY + 'px' }"></div>
+    
+        <!-- <div class="now-line" :style="{ top: nowY + 'px' }"></div> -->
 
         <div class="rows">
           <div v-for="h in hours" :key="'r' + h" class="r-hour"></div>
@@ -84,6 +93,13 @@
           :key="'c' + d.toDateString()"
           :class="['col', { weekend: i >= 5 }]"
         >
+       
+          <div
+            v-if="showNowLine && isSameDate(d, today)"
+            class="now-line-col"
+            :style="{ top: nowY + 'px' }"
+          ></div>
+
           <div class="events">
             <button
               v-for="ev in eventsForDay(d)"
@@ -127,10 +143,10 @@ function startOfISOWeek(date){ const d=new Date(date); const day=d.getDay()||7; 
 function dayKey(d){ const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}` }
 function isDateOnly(v){ return typeof v==='string' && /^\d{4}-\d{2}-\d{2}$/.test(v) }
 function parseISOFlexible(v){ if(isDateOnly(v)){ const [y,m,d]=v.split('-').map(Number); return new Date(y,m-1,d) } const x=new Date(v); return isNaN(x)?null:x }
+function addDays(d,n){ const x=new Date(d); x.setDate(x.getDate()+n); return x }
 
 const today = normalize(new Date())
 
-// IMPORTANT: keep a real local ref we can update immediately
 const currentDate = ref(new Date(props.viewDate))
 watch(() => props.viewDate, v => { currentDate.value = new Date(v) })
 
@@ -162,16 +178,25 @@ const days = computed(()=>Array.from({length:7},(_,i)=>{ const d=new Date(weekSt
 const weekdayFmt = new Intl.DateTimeFormat('en-US',{ weekday:'short' })
 function dowShort(d){ return weekdayFmt.format(d) }
 
-// Update local date immediately, then tell parent
+
+const showNowLine = computed(()=>{
+  const ws = weekStart.value
+  const we = addDays(ws, 6)
+  const show = +today >= +ws && +today <= +we
+  return show
+})
+watch(showNowLine, v => console.log('[now-line] visibility changed:', v, 'weekStart=', weekStart.value.toISOString().slice(0,10)))
+
 function setDateAndEmit(d){
   const nd = new Date(d)
   currentDate.value = nd
+  console.log('[nav] setDateAndEmit', nd.toISOString())
   emit('update-view-date', nd)
 }
 
-function prevWeek(){ const d=new Date(weekStart.value); d.setDate(d.getDate()-7); setDateAndEmit(d) }
-function nextWeek(){ const d=new Date(weekStart.value); d.setDate(d.getDate()+7); setDateAndEmit(d) }
-function goToday(){ setDateAndEmit(new Date(today)) }
+function prevWeek(){ console.log('[nav] prevWeek'); const d=new Date(weekStart.value); d.setDate(d.getDate()-7); setDateAndEmit(d) }
+function nextWeek(){ console.log('[nav] nextWeek'); const d=new Date(weekStart.value); d.setDate(d.getDate()+7); setDateAndEmit(d) }
+function goToday(){ console.log('[nav] goToday'); setDateAndEmit(new Date(today)) }
 function onKeydown(e){ if(e.key==='ArrowLeft') prevWeek(); else if(e.key==='ArrowRight') nextWeek(); else if((e.key||'').toLowerCase()==='t') goToday() }
 
 const showYearPicker = ref(false)
@@ -221,7 +246,7 @@ async function enrichVisibleWeekTimes(){
   if(changed) rawBookings.value=[...rawBookings.value]
 }
 
-watch(weekStart, async ()=>{ await enrichVisibleWeekTimes() })
+watch(weekStart, async ()=>{ console.log('[week] changed to', weekStart.value.toISOString().slice(0,10)); await enrichVisibleWeekTimes() })
 
 function n(s){ return String(s||'').toLowerCase() }
 function stationNameLC(){ return n(props.station?.name) }
@@ -271,12 +296,14 @@ async function tickNow(){
   if(y<1) y=1
   if(y>gridHeight()-1) y=gridHeight()-1
   nowY.value=y
+  console.log('[now-line] tick', d.toTimeString().slice(0,5), 'y=', y)
 }
 let nowTimer=null
 onMounted(()=>{ tickNow(); nowTimer=setInterval(tickNow,60000); addOutsideListeners() })
 onBeforeUnmount(()=>{ if(nowTimer) clearInterval(nowTimer); removeOutsideListeners() })
 watch([weekStart,hourStart,hourEnd],()=>{ tickNow() })
 
+/* drag & drop (existing) */
 const dragging = ref(null)
 const isDragging = ref(false)
 let autoDir=0, autoTimer=null
@@ -289,6 +316,7 @@ function onDragStart(e,payload){
   isDragging.value=true
   document.addEventListener('dragover', onDocDragOver, { passive:false })
   document.addEventListener('drop', onDocDrop, { passive:false })
+  console.log('[dnd] start', dragging.value)
 }
 function onDragEnd(){
   isDragging.value=false
@@ -296,6 +324,7 @@ function onDragEnd(){
   stopAuto()
   document.removeEventListener('dragover', onDocDragOver)
   document.removeEventListener('drop', onDocDrop)
+  console.log('[dnd] end')
 }
 function onDocDrop(e){
   if(!isDragging.value) return
@@ -307,6 +336,7 @@ function onDocDrop(e){
   if(idx<0) idx=0
   if(idx>6) idx=6
   const d=new Date(weekStart.value); d.setDate(d.getDate()+idx)
+  console.log('[dnd] drop to day index', idx, d.toISOString().slice(0,10))
   applyDropTo(d)
   onDragEnd()
 }
@@ -347,6 +377,7 @@ function applyDropTo(date){
     b.endDate=ne.toISOString()
   }
   rawBookings.value.splice(i,1,b)
+  console.log('[dnd] apply', dragging.value.type, '->', { start:b.startDate, end:b.endDate })
   emit('reschedule',{ stationId:String(props.station?.id||''), bookingId:bid, startDate:b.startDate, endDate:b.endDate })
 }
 
@@ -367,10 +398,40 @@ function onDocPointer(e){
 }
 function addOutsideListeners(){ document.addEventListener('mousedown', onDocPointer, true); document.addEventListener('touchstart', onDocPointer, true) }
 function removeOutsideListeners(){ document.removeEventListener('mousedown', onDocPointer, true); document.removeEventListener('touchstart', onDocPointer, true) }
+
+const swipe = { active:false, startX:0, startY:0 }
+function onSwipeStart(e){
+  if(isDragging.value) return
+  if(!e.touches || e.touches.length!==1) return
+  swipe.active=true
+  swipe.startX=e.touches[0].clientX
+  swipe.startY=e.touches[0].clientY
+  console.log('[swipe] start', swipe.startX, swipe.startY)
+}
+function onSwipeMove(e){
+  if(!swipe.active) return
+  const dx=e.touches[0].clientX - swipe.startX
+  const dy=e.touches[0].clientY - swipe.startY
+ 
+  if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+    console.log('[swipe] moving, dx=', dx.toFixed(0))
+  }
+}
+function onSwipeEnd(e){
+  if(!swipe.active) return
+  const endX = e.changedTouches?.[0]?.clientX ?? swipe.startX
+  const endY = e.changedTouches?.[0]?.clientY ?? swipe.startY
+  const dx = endX - swipe.startX
+  const dy = endY - swipe.startY
+  console.log('[swipe] end dx=', dx.toFixed(0), 'dy=', dy.toFixed(0))
+  const THRESH = 60
+  if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > THRESH){
+    if(dx < 0) nextWeek()
+    else prevWeek()
+  }
+  swipe.active=false
+}
 </script>
-
-
-
 
 <style scoped>
 .wrap {
@@ -547,6 +608,7 @@ function removeOutsideListeners(){ document.removeEventListener('mousedown', onD
   border-top: 1px solid var(--border);
 }
 
+/* 
 .now-line {
   position: absolute;
   left: 0;
@@ -555,6 +617,16 @@ function removeOutsideListeners(){ document.removeEventListener('mousedown', onD
   border-top: 2px solid #ef4444;
   z-index: 3;
   grid-column: 1 / -1;
+}
+*/
+
+.now-line-col {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  height: 0;
+  border-top: 2px solid #ef4444;
+  z-index: 3;
 }
 
 .col {
@@ -778,9 +850,16 @@ function removeOutsideListeners(){ document.removeEventListener('mousedown', onD
     transform: translateX(-100px) scale(0.7);
   }
 
-  .head-row { padding: 8px 2px 6px }
-  .week-header { gap: 4px }
-  .head-day { font-size: 11px; padding: 0 }
+  .head-row { 
+    padding: 8px 2px 6px 
+  }
+  .week-header { 
+    gap: 4px 
+  }
+  .head-day { 
+    font-size: 11px; 
+    padding: 0 
+  }
   .num { width: 24px; height: 24px }
 
   .time-wrap { --hour-h: 44px }
